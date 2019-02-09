@@ -1,15 +1,56 @@
 <?php
 /*
   Plugin Name: AIStore Attendance System
-  Version: 1.0.0
+  
   Plugin URI: #
   Author: susheelhbti
   Author URI: http://www.aistore2030.com/
   Description: AIStore Attendance System wordpress plugin for Attendance of company employee
+  Requires at least: 2.7
+  Tested up to: 5.0
+  Stable tag: 1.2.0
+  Version : 3.0
+
   */
  
+ 				
+function aistore2030_options_install() {
+   	global $wpdb;
+  	 
+
+$table_name = $wpdb->prefix . 'attendance';
+$table_name_index = $wpdb->prefix . 'attendance_index';
+
+
+	if($wpdb->get_var("show tables like '$table_name '") != $table_name ) 
+	{
+		$sql = "CREATE TABLE " . $table_name . " (
+		  `id` int(10) NOT NULL,
+  `adate` date NOT NULL,
+  `user_id` int(10) NOT NULL,
+  `entrytime` datetime NOT NULL,
+  `display_name` varchar(250) NOT NULL,
+  `exittime` datetime NOT NULL,
+  `early_exit_reason` varchar(50) NOT NULL,
+  `entry_ip_address` varchar(100) NOT NULL,
+  `exit_ip_address` varchar(100) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY " . $table_name_index . " (`user_id`,`adate`) 
+	 
+		);";
  
-  
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+	}
+ 
+}
+// run the install scripts upon plugin activation
+register_activation_hook(__FILE__,'aistore2030_options_install');
+
+
+
+
+
 
 
 
@@ -48,7 +89,9 @@ if (isset($_REQUEST['month'])) {
     $month=$_REQUEST['month'];
 } 
 
-$result = $wpdb->get_results("SELECT user_id,display_name,count(user_id ) as working_days FROM `wp1f_attendance` WHERE MONTH(adate)=".$month." GROUP by user_id,display_name");
+$table_name = $wpdb->prefix . 'attendance';
+
+$result = $wpdb->get_results("SELECT user_id,display_name,count(user_id ) as working_days FROM  $table_name WHERE MONTH(adate)=".$month." GROUP by user_id,display_name");
 
 echo "<h2>Employee working days report monthly for salary preparation </h2>";
  
@@ -135,9 +178,9 @@ $user_id=$id;
 
 echo  "<h2>Full Attendance  sheet of the company (Recent 60 Records )</h2>" ;
 
+$table_name = $wpdb->prefix . 'attendance';
 
-
-$result = $wpdb->get_results("SELECT distinct display_name,user_id FROM wp1f_attendance order by id desc");
+$result = $wpdb->get_results("SELECT distinct display_name,user_id FROM $table_name order by id desc");
 
 $i=0;
 
@@ -165,7 +208,9 @@ foreach($result as $display_name){
  echo  "</tr></table>" ;
 
 
-$result = $wpdb->get_results( $wpdb->prepare( "SELECT * , TIMESTAMPDIFF(HOUR, entrytime, entrytime) AS hours_different FROM wp1f_attendance  where user_id=%d   limit 60",$user_id));
+$table_name = $wpdb->prefix . 'attendance';
+
+$result = $wpdb->get_results( $wpdb->prepare( "SELECT * , TIMESTAMPDIFF(HOUR, entrytime, entrytime) AS hours_different FROM $table_name  where user_id=%d   limit 60",$user_id));
 ?>
 
  <table class="widefat"> 
